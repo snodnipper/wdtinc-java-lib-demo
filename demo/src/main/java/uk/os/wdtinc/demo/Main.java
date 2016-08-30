@@ -56,17 +56,6 @@ public class Main {
                 } else {
                     List<Geometry> geoms = getGeometries(geomFactory, entry);
 
-                    // Create input geometry
-                    final GeometryFactory geomFactory1 = new GeometryFactory();
-
-                    // Build tile envelope
-                    final Envelope tileEnvelope = new Envelope(0d, 4096d, 0d, 4096d);
-
-                    // Build MVT tile geometry
-                    final TileGeomResult tileGeom = JtsAdapter.createTileGeom(geoms, tileEnvelope, geomFactory1,
-                            DEFAULT_MVT_PARAMS, ACCEPT_ALL_FILTER);
-
-                    // Create MVT layer
                     byte[] result = encodeMvt(DEFAULT_MVT_PARAMS, geoms, layerName);
 
                     Entry newEntry = new Entry(entry.getZoomLevel(), entry.getColumn(), entry.getRow(),
