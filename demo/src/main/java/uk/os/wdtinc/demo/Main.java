@@ -18,6 +18,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,12 +45,12 @@ public class Main {
         MbTiles.initialise(outputFile);
         MbTiles.writeMetadata(outputFile, "OS", "0,51,5", "", "pbf", maxZoom, minZoom, "name", json);
 
-        StorageImpl borderData = new StorageImpl("data/historical.mbtiles");
+        StorageImpl borderData = new StorageImpl("demo/data/historical.mbtiles");
 
         borderData.queryMbtilesEntries(5).subscribe(entry -> {
             LOGGER.log(Level.INFO, "onNext");
             try {
-                boolean passThrough = true; // TODO CHANGE ME - passthrough just emits input
+                boolean passThrough = false; // TODO CHANGE ME - passthrough just emits input
                 if (passThrough) {
                     MbTiles.writeTile(outputFile, entry);
                 } else {
@@ -66,12 +67,12 @@ public class Main {
                             DEFAULT_MVT_PARAMS, ACCEPT_ALL_FILTER);
 
                     // Create MVT layer
-                    byte[] result = encodeMvt(DEFAULT_MVT_PARAMS, tileGeom, layerName);
+                    byte[] result = encodeMvt(DEFAULT_MVT_PARAMS, geoms, layerName);
 
                     Entry newEntry = new Entry(entry.getZoomLevel(), entry.getColumn(), entry.getRow(),
                             entry.getId(), entry.getGrid(), result);
                     MbTiles.writeTile(outputFile, newEntry);
-                    print(geomFactory, newEntry, true);
+                    print(geomFactory, newEntry, false);
                     LOGGER.log(Level.INFO, "Geom size: " + geoms.size());
                 }
 
@@ -81,11 +82,10 @@ public class Main {
         });
     }
 
-    private static byte[] encodeMvt(MvtLayerParams mvtParams, TileGeomResult tileGeom, String layerName) {
-        return encodeMvt2(mvtParams, tileGeom, layerName).toByteArray();
+    private static byte[] encodeMvt(MvtLayerParams mvtParams, Collection<Geometry> geoms, String layerName) {
+        return encodeMvt2(mvtParams, geoms, layerName).toByteArray();
     }
-
-    private static VectorTile.Tile encodeMvt2(MvtLayerParams mvtParams, TileGeomResult tileGeom, String layerName) {
+    private static VectorTile.Tile encodeMvt2(MvtLayerParams mvtParams, Collection<Geometry> geoms, String layerName) {
 
         // Build MVT
         final VectorTile.Tile.Builder tileBuilder = VectorTile.Tile.newBuilder();
@@ -96,7 +96,7 @@ public class Main {
         final UserDataIgnoreConverter ignoreUserData = new UserDataIgnoreConverter();
 
         // MVT tile geometry to MVT features
-        final List<VectorTile.Tile.Feature> features = JtsAdapter.toFeatures(tileGeom.mvtGeoms, layerProps, ignoreUserData);
+        final List<VectorTile.Tile.Feature> features = JtsAdapter.toFeatures(geoms, layerProps, ignoreUserData);
         layerBuilder.addAllFeatures(features);
         MvtLayerBuild.writeProps(layerBuilder, layerProps);
 
@@ -109,7 +109,6 @@ public class Main {
         /// Build MVT
         return tileBuilder.build();
     }
-
 
     private static List<Geometry> getGeometries(GeometryFactory geomFactory, Entry entry) throws IOException {
         byte[] bytes = entry.getVector();

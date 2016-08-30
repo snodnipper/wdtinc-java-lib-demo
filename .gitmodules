@@ -1,0 +1,4 @@
+[submodule "mapbox-vector-tile-java"]
+	path = mapbox-vector-tile-java
+	url = git@github.com:snodnipper/mapbox-vector-tile-java.git
+	branch = neg_ring_exteriors
